@@ -83,7 +83,7 @@ public class Deck {
 				show();
 				return false;
 			}
-			System.out.println(drawnCard);
+			System.out.println(Colors.GREEN + drawnCard + Colors.RESET);
 		}
 		show();
 		return true;

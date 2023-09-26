@@ -2,7 +2,7 @@ package org.mikemilligan;
 
 import java.util.Scanner;
 
-public class Main {
+public class CardPlay {
 	static Deck deck = new Deck();
 	static Scanner scanner = new Scanner(System.in);
 	
@@ -18,6 +18,7 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
                                                                      $$\\   $$ |
                                                                      \\$$$$$$  |
                                                                       \\______/\s""";
+	
 	/**
 	 * The main entry point of the program that handles user interactions.
 	 *
@@ -31,12 +32,13 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		// Continuously prompt the user for input until the user quits.
 		while (shouldContinue) {
 			// Get the users input
-			userInput = getUserInput("Options: show, shuffle, draw [num], quickdraw [num] style [option], quit");
+			userInput = getUserInput("Options: show, shuffle, draw [num], quickdraw [num] style [option], help, quit");
 			// Handle the users input
 			shouldContinue = handleInput(userInput);
 			//Print a newline for readability
 			System.out.println();
 		}
+		System.out.println(Colors.GREEN + "Goodbye! Thank you for playing Cardplay!" + Colors.RESET);
 	}
 	
 	/**
@@ -144,6 +146,12 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		successMessage("Style set to: " + style.toUpperCase());
 	}
 	
+	/**
+	 * Repeatedly draws a specified number of cards from the deck and displays them.
+	 *
+	 * @param userInput The users input as a string, which may contain the number
+	 *                  of cards to draw.
+	 */
 	private static void quickDraw(String userInput) {
 		boolean cardsRemaining = true;
 		while (cardsRemaining) {
@@ -152,6 +160,12 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		}
 	}
 	
+	/**
+	 * Draws a specified number of cards from the deck and displays them.
+	 * @param userInput The users input as a string, which may contain the number
+	 * 	 *                  of cards to draw.
+	 * @return True if there are undrawn cards remaining, otherwise false.
+	 */
 	private static boolean drawCards(String userInput) {
 		String[] command = userInput.split(" ");
 		int numCards;
@@ -169,6 +183,11 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		return cardsRemaining;
 	}
 	
+	/**
+	 * Returns true if the given string contains an int value
+	 * @param string The string to evaluate
+	 * @return True if the string is only comprised of digits, otherwise false.
+	 */
 	private static boolean isInt(String string) {
 		try {
 			Integer.parseInt(string);
@@ -178,10 +197,13 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		return true;
 	}
 	
+	/**
+	 * Displays information about the commands and their arguments.
+	 */
 	private static void showHelp() {
 		String commandPrefix = "  - ";
 		String argumentPrefix = "  --> ";
-		System.out.println("Available Commands:");
+		System.out.println(Colors.GREEN + "Available Commands:");
 		System.out.println(commandPrefix + "show: Displays the drawn and undrawn cards in the deck.");
 		System.out.println(commandPrefix + "shuffle: Shuffles the deck, randomizing the order of cards.");
 		System.out.println(commandPrefix + "draw: Draws 1 or more cards and displays the state of the deck.");
@@ -194,6 +216,6 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		System.out.println(argumentPrefix + "pretty: 'Ace of Spades', 'Seven of Hearts'");
 		System.out.println(argumentPrefix + "compact: 'A of ♠', '7 of ♥'");
 		System.out.println(commandPrefix + "help: Displays the available commands and their arguments");
-		System.out.println(commandPrefix + "quit: Exits the program");
+		System.out.println(commandPrefix + "quit: Exits the program" + Colors.RESET);
 	}
 }

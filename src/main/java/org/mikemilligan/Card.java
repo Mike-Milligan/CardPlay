@@ -4,10 +4,12 @@ package org.mikemilligan;
  * Represents a playing card with a value and suit.
  */
 public class Card {
+	
 	/**
 	 * Enumerates the possible values for a card.
 	 */
 	public enum Value { ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN,  JACK, QUEEN, KING }
+
 	/**
 	 * Enumerates the possible suits for a card.
 	 */
@@ -16,13 +18,12 @@ public class Card {
 	/**
 	 * Enumerates the available styles for displaying the card.
 	 */
-	public enum Style { NORMAL, PRETTY, COMPACT}
+	public enum Style { NORMAL, PRETTY, COMPACT }
 	
 	private final Value value;
 	private final Suit suit;
 	private Style style;
 	private boolean isDrawn;
-	
 	
 	/**
 	 * Constructs a card with the specified value and suit.
@@ -57,8 +58,22 @@ public class Card {
 		return suit;
 	}
 	
+	/**
+	 * Sets the display style of the card.
+	 *
+	 * @param style The style to set.
+	 */
 	public void setStyle(Style style) {
 		this.style = style;
+	}
+	
+	/**
+	 * Returns the display style of the card.
+	 *
+	 * @return The cards display style
+	 */
+	public Style getStyle() {
+		return style;
 	}
 	
 	/**
@@ -91,6 +106,11 @@ public class Card {
 		};
 	}
 	
+	/**
+	 * Returns a normal string representation of the card.
+	 *
+	 * @return The card's value and suit in the format "VALUE of SUIT".
+	 */
 	public String normal() {
 		return value.name() + " of " + suit.name();
 	}
@@ -137,6 +157,4 @@ public class Card {
 		};
 		return valueStr + " of " + suitIcon;
 	}
-	
-
 }
