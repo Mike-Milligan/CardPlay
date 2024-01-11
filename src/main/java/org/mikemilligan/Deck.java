@@ -10,11 +10,18 @@ import java.util.stream.Collectors;
  */
 public class Deck {
 	private List<Card> cards;
+	private boolean areCardsVisible;
 	
 	/**
 	 * Constructs a new deck of cards and initializes it with the NORMAL style.
 	 */
 	public Deck() {
+		areCardsVisible = true;
+		build();
+	}
+
+	public Deck(boolean areCardsVisible) {
+		this.areCardsVisible = areCardsVisible;
 		build();
 	}
 	
@@ -38,6 +45,15 @@ public class Deck {
 			card.setStyle(style);
 		}
 	}
+
+	/**
+	 * Checks whether cards will be visible to the user (face-up) or hidden
+	 * (face-down).
+	 * @return True if the cards are visible, False otherwise.
+	 */
+	public boolean getAreCardsVisible() {
+		return areCardsVisible;
+	}
 	
 	/**
 	 * 	Build the deck with all possible cards.
@@ -46,7 +62,11 @@ public class Deck {
 		cards = new ArrayList<>();
 		for (Card.Suit suit : Card.Suit.values()) {
 			for (Card.Value value: Card.Value.values()) {
-				cards.add(new Card(value, suit));
+				Card card = new Card(value, suit);
+
+				card.setVisibility(areCardsVisible);
+
+				cards.add(card);
 			}
 		}
 	}
@@ -83,9 +103,10 @@ public class Deck {
 				show();
 				return false;
 			}
+
 			System.out.println(Colors.GREEN + drawnCard + Colors.RESET);
 		}
-		show();
+//		show();
 		return true;
 	}
 	

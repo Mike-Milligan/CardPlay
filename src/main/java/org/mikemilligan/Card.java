@@ -24,6 +24,7 @@ public class Card {
 	private final Suit suit;
 	private Style style;
 	private boolean isDrawn;
+	private boolean isVisible;
 	
 	/**
 	 * Constructs a card with the specified value and suit.
@@ -36,6 +37,7 @@ public class Card {
 		this.suit = suit;
 		style = Style.NORMAL;
 		isDrawn = false;
+		isVisible = true;
 	}
 	
 	/**
@@ -91,6 +93,25 @@ public class Card {
 	public void draw() {
 		isDrawn = true;
 	}
+
+	/**
+	 * Checks if the card suit and value is visible (face-up).
+	 *
+	 * @return True if the card is visible, False otherwise.
+	 */
+	public boolean isVisible() {
+		return isVisible;
+	}
+
+	/**
+	 * Marks the card's suit and value as visible (face-up)
+	 * or hidden (face-down).
+	 *
+	 * @param isVisible whether the card should be visible or not
+	 */
+	public void setVisibility(boolean isVisible) {
+		this.isVisible = isVisible;
+	}
 	
 	/**
 	 * Returns a string representation of the card.
@@ -112,7 +133,9 @@ public class Card {
 	 * @return The card's value and suit in the format "VALUE of SUIT".
 	 */
 	public String normal() {
-		return value.name() + " of " + suit.name();
+        return isVisible ?
+				value.name() + " of " + suit.name()
+				: "FACE-DOWN";
 	}
 	
 	/**
@@ -128,8 +151,10 @@ public class Card {
 		// Initial Capitalization for suits (CLUBS => Clubs)
 		String suitStr = suit.toString().charAt(0)
 				+ suit.toString().substring(1).toLowerCase();
-		
-		return valueStr + " of " + suitStr;
+
+		return isVisible
+				? valueStr + " of " + suitStr
+				: "Face-down";
 	}
 	
 	/**
@@ -155,6 +180,9 @@ public class Card {
 			case SPADES -> "♠";
 			case DIAMONDS -> "♦";
 		};
-		return valueStr + " of " + suitIcon;
+
+		return isVisible
+				? valueStr + " of " + suitIcon
+				: "Face-Down";
 	}
 }
