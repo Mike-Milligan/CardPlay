@@ -26,6 +26,14 @@ public class Hand {
         total = 0;
     }
 
+    /**
+     * Returns a List of Cards representing the Hand.
+     * @return cards, the list of cards in the hand
+     */
+    public List<Card> getCards() {
+        return cards;
+    }
+
     //TODO TEST
     /**
      * Adds the given card to your hand.
@@ -83,7 +91,7 @@ public class Hand {
      */
     public boolean isBust() {
         int total = calculateTotal();
-        return total <= 21;
+        return total > 21;
     }
 
     //TODO TEST
