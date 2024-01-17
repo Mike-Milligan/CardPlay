@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
  * Represents a deck of playing cards.
  */
 public class Deck {
-	private List<Card> cards;
-	private boolean areCardsVisible;
-	
+	private static List<Card> cards;
+	private final boolean areCardsVisible;
+
 	/**
 	 * Constructs a new deck of cards and initializes it with the NORMAL style.
 	 */
@@ -24,7 +24,7 @@ public class Deck {
 		this.areCardsVisible = areCardsVisible;
 		build();
 	}
-	
+
 	/**
 	 * Retrieves the list of cards in the deck.
 	 *
@@ -34,7 +34,7 @@ public class Deck {
 	public List<Card> getCards() {
 		return cards;
 	}
-	
+
 	/**
 	 * Sets the display style for the deck.
 	 *
@@ -46,15 +46,6 @@ public class Deck {
 		}
 	}
 
-	/**
-	 * Checks whether cards will be visible to the user (face-up) or hidden
-	 * (face-down).
-	 * @return True if the cards are visible, False otherwise.
-	 */
-	public boolean getAreCardsVisible() {
-		return areCardsVisible;
-	}
-	
 	/**
 	 * 	Build the deck with all possible cards.
 	 */
@@ -70,14 +61,14 @@ public class Deck {
 			}
 		}
 	}
-	
+
 	/**
 	 * Shuffles the deck, randomizing the order of cards.
 	 */
 	public void shuffle() {
 		Collections.shuffle(cards);
 	}
-	
+
 	/**
 	 * Draws a specified number of cards from the deck and displays them.
 	 *
@@ -86,7 +77,7 @@ public class Deck {
 	 */
 	public boolean draw(int numDraws) {
 		for (int i = 0; i < numDraws; i++) {
-			
+
 			Card drawnCard = null;
 			// Iterate through the cards in the deck to find an undrawn card.
 			for (Card card : cards) {
@@ -109,7 +100,7 @@ public class Deck {
 //		show();
 		return true;
 	}
-	
+
 	/**
 	 * Displays the deck of cards based on the selected display style.
 	 */
@@ -118,7 +109,7 @@ public class Deck {
 				.filter(Card::isDrawn)
 				.collect(Collectors.toList());
 		System.out.println("Drawn Cards: " + drawnCards);
-		
+
 		List<Card> undrawnCards = cards.stream()
 				.filter(card -> !card.isDrawn())
 				.collect(Collectors.toList());
