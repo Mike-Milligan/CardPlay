@@ -6,6 +6,7 @@ import org.mikemilligan.Card.Value;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.StringJoiner;
 
 public class Hand {
     private List<Card> cards;
@@ -28,13 +29,13 @@ public class Hand {
 
     /**
      * Returns a List of Cards representing the Hand.
+     *
      * @return cards, the list of cards in the hand
      */
     public List<Card> getCards() {
         return cards;
     }
 
-    //TODO TEST
     /**
      * Adds the given card to your hand.
      *
@@ -44,7 +45,6 @@ public class Hand {
         cards.add(card);
     }
 
-    //TODO TEST
     /**
      * Calculates the value of the hand.
      * ACE counts as 11 if it won't bust your hand, else it will
@@ -55,38 +55,42 @@ public class Hand {
      * @return int total, the total value of the hand
      */
     public int calculateTotal() {
+        int aces = 0;
         total = 0;
 
         for (Card card : cards) {
             Value value = card.getValue();
-            // Number cards
+
+            // If Number, add number
             if (numbers.contains(value)) {
                 total += value.ordinal() + 1;
 
-            // Face cards
+                // If 10-card, add 10
             } else if (tenCards.contains(value)) {
                 total += 10;
 
-            // Ace cards
+                // Count number of aces
             } else if (value.equals(Value.ACE)) {
-                // Count as 11 if able
-                if (total + 11 <= 21) {
-                    total += 11;
-
-                // Else count as 1
-                } else {
-                    total += 1;
-                }
+                aces++;
             }
         }
-
+        // Handle aces
+        for (int i = 0; i < aces; i++) {
+            // Count as 11 if able
+            if (total + 11 <= 21) {
+                total += 11;
+                // Else count as 1
+            } else {
+                total += 1;
+            }
+        }
         return total;
     }
 
-    //TODO TEST
     /**
      * Returns True if the hand has gone Bust.
      * A hand has gone bust if the total is greater than 21
+     *
      * @return True if the hand has gone bust, False otherwise.
      */
     public boolean isBust() {
@@ -94,11 +98,11 @@ public class Hand {
         return total > 21;
     }
 
-    //TODO TEST
     /**
      * Returns true if the hand is a natural blackjack.
      * A natural blackjack consists of 2 cards, one being an ACE,
      * and the other being a 10-card
+     *
      * @return True if the hand is a natural blackjack,
      * False otherwise.
      */
@@ -111,16 +115,28 @@ public class Hand {
         return (
                 // First card is 10-card
                 tenCards.contains(cards.get(0).getValue())
-                        // Second card is ACE
+                        // AND Second card is ACE
                         && Value.ACE.equals(cards.get(1).getValue())
         ) || (  // OR
                 // First card is ACE
                 Value.ACE.equals(cards.get(0).getValue())
-                        // Second card is 10-card
+                        // AND Second card is 10-card
                         && tenCards.contains(cards.get(1).getValue())
         );
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joinCards = new StringJoiner(", ");
+        for (Card card : cards) {
+            joinCards.add(card.toString());
+        }
+
+        return joinCards.toString();
+    }
 
 
-
+    public int size() {
+        return cards.size();
     }
 }
