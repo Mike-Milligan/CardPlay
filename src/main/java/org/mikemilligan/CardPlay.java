@@ -1,11 +1,10 @@
 package org.mikemilligan;
 
-import java.util.Scanner;
+
 
 public class CardPlay {
 	static Deck deck = new Deck();
-	static Scanner scanner = new Scanner(System.in);
-	
+
 	static String welcome = """
  $$$$$$\\                            $$\\      $$$$$$$\\  $$\\                    \s
 $$  __$$\\                           $$ |     $$  __$$\\ $$ |                   \s
@@ -18,7 +17,7 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
                                                                      $$\\   $$ |
                                                                      \\$$$$$$  |
                                                                       \\______/\s""";
-	
+
 	/**
 	 * The main entry point of the program that handles user interactions.
 	 *
@@ -27,12 +26,12 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 	public static void main(String[] args) {
 		String userInput;
 		boolean shouldContinue = true;
-		
+
 		System.out.println(Colors.RED + welcome + Colors.RESET);
 		// Continuously prompt the user for input until the user quits.
 		while (shouldContinue) {
 			// Get the users input
-			userInput = getUserInput("Options: show, shuffle, draw [num], quickdraw [num] style [option], help, quit");
+			userInput = Utilities.getUserInput("Options: show, shuffle, draw [num], quickdraw [num] style [option], help, quit");
 			// Handle the users input
 			shouldContinue = handleInput(userInput);
 			//Print a newline for readability
@@ -40,26 +39,7 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 		}
 		System.out.println(Colors.GREEN + "Goodbye! Thank you for playing Cardplay!" + Colors.RESET);
 	}
-	
-	/**
-	 * Retrieves user input after displaying a prompt message.
-	 *
-	 * @param prompt The message to display as a prompt for user input.
-	 * @return The user's input as a trimmed and lowercase String.
-	 */
-	private static String getUserInput(String prompt) {
-		String userInput = "";
-		// Prompt the user until a non-empty and non-blank input is provided.
-		while (userInput.isBlank() || userInput.isEmpty()) {
-			// Display the prompt message in cyan.
-			System.out.println(Colors.CYAN + prompt + Colors.RESET);
-			// Display the input symbol in purple.
-			System.out.print(Colors.PURPLE + ">> " + Colors.RESET);
-			userInput = scanner.nextLine().trim().toLowerCase();
-		}
-		return userInput;
-	}
-	
+
 	/**
 	 * Handles the user's input by parsing the command and executing it.
 	 *
@@ -85,33 +65,14 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 			case "help" -> showHelp();
 			// Exit the program
 			case "quit" -> { return false; }
-			
+
 			// Display an invalid command message
-			default -> errorMessage("Invalid Command");
+			default -> Utilities.errorMessage("Invalid Command");
 		}
 		// Continue the program
 		return true;
 	}
-	
-	/**
-	 * Displays an error message in red to alert the user about an error or
-	 * invalid input.
-	 *
-	 * @param message The message to be displayed as an error message.
-	 */
-	private static void errorMessage(String message) {
-		System.out.println(Colors.RED + "[ERROR]" + message + Colors.RESET);
-	}
-	
-	/**
-	 * Displays a success message in green.
-	 *
-	 * @param message The message to be displayed as a success message.
-	 */
-	private static void successMessage(String message) {
-		System.out.println(Colors.GREEN + message + Colors.RESET);
-	}
-	
+
 	/**
 	 * Allows the user to select a style for displaying the deck of cards.
 	 *
@@ -120,11 +81,11 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 	private static void selectStyle(String userInput) {
 		String style;
 		String[] command = userInput.split(" ");
-		
+
 		// Check if the user entered "style" without specifying a style.
 		if (command.length == 1) {
 			String prompt = "Options: normal, pretty, or compact";
-			style = getUserInput(prompt);
+			style = Utilities.getUserInput(prompt);
 		} else { // User entered "style pretty" or similar.
 			style = command[1];
 		}
@@ -137,15 +98,15 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 			case "back" -> { return; }
 			//Invalid style, prompt the user again.
 			default -> {
-				errorMessage("Invalid Style");
+				Utilities.errorMessage("Invalid Style");
 				selectStyle(style);
 				return;
 			}
 		}
 		// Display a success message with the selected style.
-		successMessage("Style set to: " + style.toUpperCase());
+		Utilities.successMessage("Style set to: " + style.toUpperCase());
 	}
-	
+
 	/**
 	 * Repeatedly draws a specified number of cards from the deck and displays them.
 	 *
@@ -159,7 +120,7 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 			System.out.println();
 		}
 	}
-	
+
 	/**
 	 * Draws a specified number of cards from the deck and displays them.
 	 * @param userInput The users input as a string, which may contain the number
@@ -174,29 +135,15 @@ $$ |  $$\\ $$  __$$ |$$ |      $$ |  $$ | ((1))$ |      $$ |$$  __$$ |$$ |  $$ |
 			cardsRemaining = deck.draw(1);
 			return cardsRemaining;
 		}
-		if (isInt(command[1])) {
+		if (Utilities.isInt(command[1])) {
 			numCards = Integer.parseInt(command[1]);
 			cardsRemaining = deck.draw(numCards);
 		} else {
-			errorMessage("Argument must be an integer");
+			Utilities.errorMessage("Argument must be an integer");
 		}
 		return cardsRemaining;
 	}
-	
-	/**
-	 * Returns true if the given string contains an int value
-	 * @param string The string to evaluate
-	 * @return True if the string is only comprised of digits, otherwise false.
-	 */
-	private static boolean isInt(String string) {
-		try {
-			Integer.parseInt(string);
-		} catch (NumberFormatException e) {
-			return false;
-		}
-		return true;
-	}
-	
+
 	/**
 	 * Displays information about the commands and their arguments.
 	 */
