@@ -101,6 +101,23 @@ public class Deck {
 		return true;
 	}
 
+	public Card draw() {
+		Card drawnCard = null;
+		for (Card card : cards) {
+			if (card.isDrawn()) {
+				continue;
+			}
+			card.draw();
+			drawnCard = card;
+			break;
+		}
+		return drawnCard;
+	}
+
+	public void draw(Card card) {
+		card.draw();
+	}
+
 	/**
 	 * Displays the deck of cards based on the selected display style.
 	 */
