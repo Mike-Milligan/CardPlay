@@ -15,7 +15,6 @@ public class BlackJack {
     private static Player dealer;
     private static int minBet;
     private static int maxBet;
-    private static boolean shouldContinue;
 
     public static void main(String[] args) {
         // Greeting
@@ -53,12 +52,14 @@ public class BlackJack {
         if (maxBet < minBet) {
             Utilities.errorMessage("Maximum bet amount may not be lower than the minimum bet amount");
             setUpLimits();
+            return;
         }
 
         // Prompt again if either are lower than or equal to zero
-        if (minBet <= 0 || maxBet <= 0) {
+        if (minBet <= 0) {
             Utilities.errorMessage("Bet amounts may not be lower than 1");
             setUpLimits();
+            return;
         }
 
         // Display bet amounts to the user
@@ -84,6 +85,14 @@ public class BlackJack {
         // Prompt user for number of players
         int numPlayers = Utilities.getIntUserInput("Enter the number of players: ");
 
+        if (numPlayers < 1) {
+            Utilities.errorMessage("Number of players may not be lower than 1");
+        }
+
+        if (numPlayers >= 20) {
+            Utilities.failureMessage("What the fuck... ok let's get on with it then");
+        }
+
         // For each player, prompt for their name, and add them to the players list
         for (int i = 0; i < numPlayers; i++) {
             String name = Utilities.getUserInput("Enter name for Player " + (i + 1));
@@ -106,11 +115,11 @@ public class BlackJack {
     }
 
     private static void play() {
-        shouldContinue = true;
-        int i = 0;
+        boolean shouldContinue = true;
         System.out.println("Game Starting");
 
         while (shouldContinue) {
+            setUpDeck();
             // Place Bets
             System.out.println("Place your bets\n" + Colors.PURPLE
                     + "Minimum bet: " + minBet
@@ -124,10 +133,8 @@ public class BlackJack {
             if (dealerNatural) {
                 settlement();
 
-                for (Player player : players) {
-                    player.newHand();
-                }
-                dealer.newHand();
+                resetHands();
+                shouldContinue = playAgain();
 
                 continue;
             }
@@ -141,15 +148,8 @@ public class BlackJack {
             System.out.println("Settlement");
             settlement();
             // Play again? / Buy back in?
-            i++;
-            if (i == 5) {
-                shouldContinue = false;
-            }
-            setUpDeck();
-            for (Player player : players) {
-                player.newHand();
-            }
-            dealer.newHand();
+            resetHands();
+            shouldContinue = playAgain();
         }
     }
 
@@ -186,6 +186,14 @@ public class BlackJack {
             Utilities.errorMessage("Your bet must be lower or equal to your balance: "
                     + player.getBalance());
             playerBet(player);
+        }
+
+        if (bet == minBet) {
+            Utilities.failureMessage("Wimp.");
+        }
+
+        if (bet == maxBet) {
+            Utilities.infoMessage("Watch out we have a high roller here");
         }
 
         player.setCurrentBet(bet);
@@ -244,7 +252,6 @@ public class BlackJack {
 
         for (Player player : players) {
             if (player.getHand().isNatural()) {
-                player.setSkipTurn(true);
                 int payoutRate = dealerNatural ? 1 : 3;
                 int payout = player.claimPayout(payoutRate);
 
@@ -258,7 +265,7 @@ public class BlackJack {
     private static void playersTurns() {
         for (Player player : players) {
             String name = player.getName();
-            if (player.getSkipTurn()) {
+            if (player.getHand().isNatural()) {
                 Utilities.infoMessage("Skipping " + player.getName() + "'s turn");
                 continue;
             }
@@ -280,6 +287,12 @@ public class BlackJack {
                 case "hit":
                 case "h":
                     Card card = deck.draw();
+
+                    if (card == null) {
+                        shuffleDiscards();
+                        card = deck.draw();
+                    }
+
                     card.setVisibility(true);
 
                     boolean bust = player.hit(card);
@@ -296,17 +309,78 @@ public class BlackJack {
                 case "s":
                     Utilities.successMessage(name + " stands with a total of " + player.getHand().calculateTotal());
                     canHit = false;
+                    break;
+                default:
+                    Utilities.errorMessage("Please enter 'hit'/'h' or 'stand'/'s'");
             }
         }
 
     }
 
     private static void dealersTurn() {
+        String name = dealer.getName();
 
+        dealer.getHand().getCards().get(1).setVisibility(true);
+        Utilities.infoMessage(dealer.getHand().toString() + "\nTotal: " + dealer.getHand().calculateTotal());
+
+        while (dealer.getHand().calculateTotal() < 17) {
+            Card card = deck.draw();
+            card.setVisibility(true);
+
+            boolean bust = dealer.hit(card);
+            int total = dealer.getHand().calculateTotal();
+
+            Utilities.infoMessage(name + " drew " + card + ", total: " + total);
+
+            if (bust) {
+                Utilities.failureMessage(name + " has bust with a total of " + total);
+                return;
+            }
+        }
+        Utilities.successMessage(name + " stands with a total of: " + dealer.getHand().calculateTotal());
     }
 
     private static void settlement() {
+        int dealerTotal = dealer.getHand().calculateTotal();
+        for (Player player : players) {
+            String name = player.getName();
+            int playerTotal = player.getHand().calculateTotal();
 
+            if (player.getHand().isNatural()) {
+                Utilities.successMessage(name + " had BlackJack! You won " + player.latestPayout + " (Balance: " + player.getBalance() + ")");
+                continue;
+            }
+
+            if (player.isBust()) {
+                Utilities.failureMessage(name + " has gone bust and has won nothing. (Balance: " + player.getBalance() + ")");
+                continue;
+            }
+
+            if (dealer.isBust()) {
+                int payout = player.claimPayout(2);
+                Utilities.successMessage("DEALER has bust and " + name + " won " + payout + "! (Balance: " + player.getBalance() + ")");
+                continue;
+            }
+
+            if (playerTotal > dealerTotal) {
+                int payout = player.claimPayout(2);
+                Utilities.successMessage(name + " has beat the dealer with " + playerTotal + " and has won " + payout + "! (Balance: " + player.getBalance() + ")");
+            } else if (playerTotal == dealerTotal) {
+                int payout = player.claimPayout(1);
+                Utilities.successMessage(name + " is in a stand-off! You keep your bet of " + payout + "! (Balance: " + player.getBalance() + ")");
+            } else {
+                Utilities.failureMessage(name + " lost to DEALER and has won nothing. (Balance: " + player.getBalance() + ")");
+            }
+
+        }
+
+    }
+
+    private static void resetHands() {
+        for (Player player : players) {
+            player.newHand();
+        }
+        dealer.newHand();
     }
 
     private static void shuffleDiscards() {
@@ -324,5 +398,35 @@ public class BlackJack {
             deck.draw(card);
         }
         deck.shuffle();
+    }
+
+    private static boolean playAgain() {
+        String userInput = Utilities.getUserInput("Play again? (Y/N)");
+
+        return switch (userInput.toUpperCase()) {
+            case "Y" -> {
+                newPlayers();
+                yield true;
+            }
+            case "N" -> false;
+            default -> {
+                Utilities.errorMessage("Please enter Y or N");
+                yield playAgain();
+            }
+        };
+    }
+
+    private static void newPlayers() {
+        String userInput = Utilities.getUserInput("Play with the same players? (Y/N)");
+        switch (userInput.toUpperCase()) {
+            case "Y":
+                return;
+            case "N":
+                setUpPlayers();
+                return;
+            default:
+                Utilities.errorMessage("Please enter Y or N");
+                newPlayers();
+        }
     }
 }

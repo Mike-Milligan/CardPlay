@@ -6,19 +6,15 @@ public class Player {
     private final String name;
     private Hand hand;
     private int balance;
-    private final int defaultStartingBalance = 500;
     private int currentBet;
-    private boolean skipTurn;
-
     int latestPayout;
 
 
     public Player(String name) {
         this.name = name.toUpperCase();
         hand = new Hand();
-        balance = defaultStartingBalance;
+        balance = 500;
         currentBet = 0;
-        skipTurn = false;
         latestPayout = 0;
     }
 
@@ -51,17 +47,6 @@ public class Player {
     public void newHand() {
         this.hand = new Hand();
     }
-
-
-    public void setSkipTurn(boolean skipTurn) {
-        this.skipTurn = skipTurn;
-    }
-
-
-    public boolean getSkipTurn() {
-        return this.skipTurn;
-    }
-
 
     public boolean isBust() {
         return hand.isBust();
