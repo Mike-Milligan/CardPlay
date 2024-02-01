@@ -176,6 +176,7 @@ public class BlackJack {
 
         int bet = Utilities.getIntUserInput(name + ", enter your bet (Balance: " + balance + ")");
 
+
         if (bet < minBet || bet > maxBet) {
             Utilities.errorMessage("Your bet must be between " + minBet
                     + " and " + maxBet);
