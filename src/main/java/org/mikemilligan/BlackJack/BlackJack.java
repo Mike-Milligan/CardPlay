@@ -1,13 +1,13 @@
 package org.mikemilligan.BlackJack;
 
+import org.mikemilligan.BlackJack.GUI.BlackJackGUI;
+import org.mikemilligan.BlackJack.GUI.BlackJackGUI.Button;
 import org.mikemilligan.Card;
-import org.mikemilligan.Colors;
 import org.mikemilligan.Deck;
-import org.mikemilligan.Utilities;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
 
 public class BlackJack {
     private static Deck deck;
@@ -15,23 +15,25 @@ public class BlackJack {
     private static Player dealer;
     private static int minBet;
     private static int maxBet;
+    private static BlackJackGUI gui;
 
     public static void main(String[] args) {
-        // Greeting
-        // Set Up
-        setUp();
-        // Start Play
-        play();
-        // Goodbye
+        SwingUtilities.invokeLater(() -> {
+            gui = new BlackJackGUI();
+            setUp();
+            play();
+        });
     }
 
     /**
-     * Sets up the betting limits, players and deck.
+     * Sets up the betting limits and players
      */
     private static void setUp() {
+        gui.setStage("Set up");
+        gui.setCurrentBet(0);
+
         setUpLimits();
         setUpPlayers();
-        setUpDeck();
     }
 
     /**
@@ -42,28 +44,30 @@ public class BlackJack {
      * than zero.
      */
     private static void setUpLimits() {
-        System.out.println("Set up betting limits");
+        gui.setStage("Betting setup");
         // Prompt user for minimum bet amount
-        minBet = Utilities.getIntUserInput("Enter the minimum bet amount: ");
-        // Prompt user for maximum bet amount
-        maxBet = Utilities.getIntUserInput("Enter the maximum bet amount: ");
+        minBet = gui.promptForIntValue("Enter the minimum bet amount: ");
 
-        // Prompt again if max < min
-        if (maxBet < minBet) {
-            Utilities.errorMessage("Maximum bet amount may not be lower than the minimum bet amount");
-            setUpLimits();
-            return;
+        // Prompt again if min <= 0
+        while (minBet <= 0) {
+            gui.showErrorMessage("Minimum bet amount may not be lower than 1");
+            minBet = gui.promptForIntValue("Enter the minimum bet amount: ");
         }
 
-        // Prompt again if either are lower than or equal to zero
-        if (minBet <= 0) {
-            Utilities.errorMessage("Bet amounts may not be lower than 1");
-            setUpLimits();
-            return;
+        // Prompt user for maximum bet amount
+        maxBet = gui.promptForIntValue("Enter the maximum bet amount: ");
+
+        // Prompt again if max < min
+        while (maxBet < minBet) {
+            gui.showErrorMessage("Maximum bet amount may not be lower than the minimum bet amount (" + minBet + ")");
+            maxBet = gui.promptForIntValue("Enter the maximum bet amount: ");
         }
 
         // Display bet amounts to the user
-        Utilities.successMessage("Minimum bet: " + minBet + "\nMaximum bet: " + maxBet);
+        gui.setMinBet(minBet);
+        gui.setMaxBet(maxBet);
+        gui.addToHistory("Min bet: " + minBet);
+        gui.addToHistory("Max bet: " + maxBet);
     }
 
     /**
@@ -74,34 +78,29 @@ public class BlackJack {
      * Displays a success message with the names of the added players.
      */
     private static void setUpPlayers() {
-        dealer = new Player("DEALER");
+        gui.setStage("Player setup");
+
+        dealer = new Player("DEALER", -1);
 
         players = new ArrayList<>();
-        // Used to concatenate player names
-        StringJoiner playerNames = new StringJoiner(", ");
+        // Prompt user for number of hands
+        int numPlayers = gui.promptForIntValue("Enter the number of players: ");
 
-        System.out.println("Set up players");
-
-        // Prompt user for number of players
-        int numPlayers = Utilities.getIntUserInput("Enter the number of players: ");
-
-        if (numPlayers < 1) {
-            Utilities.errorMessage("Number of players may not be lower than 1");
-        }
-
-        if (numPlayers >= 20) {
-            Utilities.failureMessage("What the fuck... ok let's get on with it then");
+        while (numPlayers < 1) {
+            gui.showErrorMessage("Number of players may not be lower than 1");
+            numPlayers = gui.promptForIntValue("Enter the number of players: ");
         }
 
         // For each player, prompt for their name, and add them to the players list
         for (int i = 0; i < numPlayers; i++) {
-            String name = Utilities.getUserInput("Enter name for Player " + (i + 1));
-            players.add(new Player(name));
-            playerNames.add(players.get(i).getName());
+            String name = gui.promptForStringValue("Enter name for Player " + (i + 1));
+            Player player = new Player(name, i);
+            players.add(player);
+            // add a hand panel
+            gui.addPlayerHand(player.getName());
+            // Display the name of the added player to the user
+            gui.addToHistory(player.getName() + " joined");
         }
-
-        // Display the names of the added players to the user
-        Utilities.successMessage("Players: " + playerNames);
     }
 
     /**
@@ -112,55 +111,47 @@ public class BlackJack {
         deck = new Deck(false);
         deck.shuffle();
         deck.setStyle(Card.Style.COMPACT);
+        gui.addToHistory("Deck shuffled");
     }
 
     private static void play() {
         boolean shouldContinue = true;
-        System.out.println("Game Starting");
 
         while (shouldContinue) {
+            gui.setStage("\nNew Round");
             setUpDeck();
             // Place Bets
-            System.out.println("Place your bets\n" + Colors.PURPLE
-                    + "Minimum bet: " + minBet
-                    + "\nMaximum bet: " + maxBet + Colors.RESET);
             placeBets();
             // Initial Deal
-            System.out.println("Dealing");
             deal();
             // Handle Naturals
             boolean dealerNatural = handleNaturals();
             if (dealerNatural) {
                 settlement();
-
-                resetHands();
                 shouldContinue = playAgain();
-
+                resetHands();
                 continue;
             }
             // Each Player turn
-            System.out.println("Player's turn");
             playersTurns();
             // Dealer turn
-            System.out.println("Dealer's turn");
             dealersTurn();
             // Settlement
-            System.out.println("Settlement");
             settlement();
             // Play again? / Buy back in?
-            resetHands();
             shouldContinue = playAgain();
+            resetHands();
         }
     }
 
     private static void placeBets() {
+        gui.setStage("Placing bets");
         for (Player player : players) {
             playerBet(player);
-        }
 
-        for (Player player : players) {
-            Utilities.successMessage(player.getName() + ", Bet: "
-                    + player.getCurrentBet() + ", Balance: " + player.getBalance());
+            gui.updatePlayerBet(player.id, player.getCurrentBet());
+            gui.updatePlayerBalance(player.id, player.getBalance());
+            gui.addToHistory(player.getName() + " bet " + player.getCurrentBet());
         }
     }
 
@@ -170,46 +161,37 @@ public class BlackJack {
 
         if (balance < minBet) {
             player.setCurrentBet(balance);
-            System.out.println(Colors.CYAN + name + " is all in with " + balance + Colors.RESET);
+            gui.showInfoMessage(name + " is all in with " + player.getCurrentBet());
+
             return;
         }
 
-        int bet = Utilities.getIntUserInput(name + ", enter your bet (Balance: " + balance + ")");
-
+        int bet = gui.promptForIntValue(name + " enter your bet");
 
         if (bet < minBet || bet > maxBet) {
-            Utilities.errorMessage("Your bet must be between " + minBet
-                    + " and " + maxBet);
+            gui.showErrorMessage("Your bet must be between " + minBet + " and " + maxBet);
+
             playerBet(player);
+            return;
         }
 
         if (balance < bet) {
-            Utilities.errorMessage("Your bet must be lower or equal to your balance: "
-                    + player.getBalance());
+            gui.showErrorMessage("You bet can not be higher than your balance of " + player.getBalance());
             playerBet(player);
-        }
-
-        if (bet == minBet) {
-            Utilities.failureMessage("Wimp.");
-        }
-
-        if (bet == maxBet) {
-            Utilities.infoMessage("Watch out we have a high roller here");
+            return;
         }
 
         player.setCurrentBet(bet);
     }
 
     private static void deal() {
+        gui.setStage("\nDealing");
+
         dealToAllPlayers();
         dealToDealer();
 
         dealToAllPlayers();
         dealToDealer();
-        for (Player player : players) {
-            Utilities.successMessage(player.getName() + ": " + player.getHand().toString());
-        }
-        Utilities.successMessage(dealer.getName() + ": " + dealer.getHand().toString());
     }
 
     private static void dealToAllPlayers() {
@@ -224,7 +206,11 @@ public class BlackJack {
             drawnCard.setVisibility(true);
             player.hit(drawnCard);
 
-            Utilities.infoMessage(player.getName() + " drew " + drawnCard);
+            gui.updateHand(player.id, player.getHand());
+            gui.updateTotal(player.id, player.getHand().isNatural() ? "BlackJack" : player.getHand().calculateTotal());
+            gui.addToHistory(player.getName() + " drew " + drawnCard.compact());
+
+            gui.refresh();
         }
     }
 
@@ -239,16 +225,19 @@ public class BlackJack {
         if (dealer.getHand().size() != 1) {
             drawnCard.setVisibility(true);
         }
+
         dealer.hit(drawnCard);
 
-        Utilities.infoMessage(dealer.getName() + " drew " + drawnCard);
+        gui.updateHand(dealer.id, dealer.getHand());
+        gui.updateTotal(dealer.id, dealer.getHand().isNatural() ? "BlackJack" : "Unknown");
+        gui.addToHistory(dealer.getName() + " drew " + drawnCard.compact());
     }
 
     private static boolean handleNaturals() {
         boolean dealerNatural = dealer.getHand().isNatural();
 
         if (dealerNatural) {
-            Utilities.infoMessage("The dealer has BlackJack!");
+            gui.showInfoMessage("The dealer has BlackJack!");
         }
 
         for (Player player : players) {
@@ -256,7 +245,8 @@ public class BlackJack {
                 int payoutRate = dealerNatural ? 1 : 3;
                 int payout = player.claimPayout(payoutRate);
 
-                Utilities.infoMessage(player.getName() + " has BlackJack! They have won: " + payout);
+                gui.updatePlayerBalance(player.id, player.getBalance());
+                gui.showInfoMessage(player.getName() + " has BlackJack! They have won " + payout);
             }
         }
 
@@ -266,63 +256,67 @@ public class BlackJack {
     private static void playersTurns() {
         for (Player player : players) {
             String name = player.getName();
+            gui.setStage("\n" + name + "'s turn");
+            // Handle Natural BlackJacks
             if (player.getHand().isNatural()) {
-                Utilities.infoMessage("Skipping " + player.getName() + "'s turn");
+                gui.showInfoMessage(name + " has a natural BlackJack");
+                gui.addToHistory(name + " has BlackJack");
                 continue;
             }
-            Utilities.infoMessage(name + "'s turn");
-            playersTurn(player);
+
+            while (player.canHit()) {
+                playersTurn(player);
+            }
+
         }
     }
 
     private static void playersTurn(Player player) {
-        Utilities.infoMessage(player.getHand().toString() + "\nTotal: " + player.getHand().calculateTotal());
-        String name = player.getName();
-
-        boolean canHit = true;
-
-        while (canHit) {
-            String action = Utilities.getUserInput("Would you like to hit or stand?");
-
-            switch (action) {
-                case "hit":
-                case "h":
-                    Card card = deck.draw();
-
-                    if (card == null) {
-                        shuffleDiscards();
-                        card = deck.draw();
-                    }
-
-                    card.setVisibility(true);
-
-                    boolean bust = player.hit(card);
-                    int total = player.getHand().calculateTotal();
-
-                    Utilities.infoMessage(name + " drew " + card + ", total: " + total);
-
-                    if (bust) {
-                        Utilities.failureMessage(name + " has bust with a total of " + total);
-                        canHit = false;
-                    }
-                    break;
-                case "stand":
-                case "s":
-                    Utilities.successMessage(name + " stands with a total of " + player.getHand().calculateTotal());
-                    canHit = false;
-                    break;
-                default:
-                    Utilities.errorMessage("Please enter 'hit'/'h' or 'stand'/'s'");
-            }
+        Button button = gui.promptForOption();
+        switch (button) {
+            case HIT -> hit(player);
+            case STAND -> stand(player);
         }
+    }
 
+    private static void hit(Player player) {
+        String name = player.getName();
+        Card card = deck.draw();
+
+        if (card == null) {
+            shuffleDiscards();
+            card = deck.draw();
+        }
+        card.setVisibility(true);
+
+        boolean bust = player.hit(card);
+        int total = player.getHand().calculateTotal();
+
+        gui.addToHistory(name + " drew " + card);
+
+        gui.updateHand(player.id, player.getHand());
+        gui.updateTotal(player.id, player.getHand().calculateTotal());
+
+        if (bust) {
+            gui.showErrorMessage(name + " has bust with a total of " + total);
+            gui.addToHistory(name + " has bust");
+            player.setCanHit(false);
+        }
+    }
+
+    private static void stand(Player player) {
+        String name = player.getName();
+        gui.addToHistory(name + " stands");
+        player.setCanHit(false);
     }
 
     private static void dealersTurn() {
+        gui.setStage("\nDealer's turn");
         String name = dealer.getName();
 
         dealer.getHand().getCards().get(1).setVisibility(true);
-        Utilities.infoMessage(dealer.getHand().toString() + "\nTotal: " + dealer.getHand().calculateTotal());
+        gui.updateHand(dealer.id, dealer.getHand());
+        gui.updateTotal(dealer.id, dealer.getHand().calculateTotal());
 
         while (dealer.getHand().calculateTotal() < 17) {
             Card card = deck.draw();
@@ -331,46 +325,59 @@ public class BlackJack {
             boolean bust = dealer.hit(card);
             int total = dealer.getHand().calculateTotal();
 
-            Utilities.infoMessage(name + " drew " + card + ", total: " + total);
+            gui.updateHand(dealer.id, dealer.getHand());
+            gui.updateTotal(dealer.id, dealer.getHand().calculateTotal());
+            gui.addToHistory(name + " drew " + card);
 
             if (bust) {
-                Utilities.failureMessage(name + " has bust with a total of " + total);
+                gui.showInfoMessage(name + " has bust with a total of " + total);
+                gui.addToHistory(name + " has bust");
                 return;
             }
         }
-        Utilities.successMessage(name + " stands with a total of: " + dealer.getHand().calculateTotal());
+        gui.addToHistory(name + " stands");
     }
 
     private static void settlement() {
+        gui.setStage("\nSettlement");
         int dealerTotal = dealer.getHand().calculateTotal();
         for (Player player : players) {
             String name = player.getName();
             int playerTotal = player.getHand().calculateTotal();
 
             if (player.getHand().isNatural()) {
-                Utilities.successMessage(name + " had BlackJack! You won " + player.latestPayout + " (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(name + " has BlackJack!");
+                gui.addToHistory(name + " has won " + player.latestPayout);
                 continue;
             }
 
             if (player.isBust()) {
-                Utilities.failureMessage(name + " has gone bust and has won nothing. (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(name + " has bust");
+                gui.addToHistory(name + " has won nothing");
                 continue;
             }
 
             if (dealer.isBust()) {
                 int payout = player.claimPayout(2);
-                Utilities.successMessage("DEALER has bust and " + name + " won " + payout + "! (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(dealer.getName() + " has bust");
+                gui.addToHistory(name + " has won " + payout);
+                gui.updatePlayerBalance(player.id, player.getBalance());
                 continue;
             }
 
             if (playerTotal > dealerTotal) {
                 int payout = player.claimPayout(2);
-                Utilities.successMessage(name + " has beat the dealer with " + playerTotal + " and has won " + payout + "! (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(name + " beat " + dealer.getName() + "!");
+                gui.addToHistory(name + " has won " + payout);
+                gui.updatePlayerBalance(player.id, player.getBalance());
             } else if (playerTotal == dealerTotal) {
                 int payout = player.claimPayout(1);
-                Utilities.successMessage(name + " is in a stand-off! You keep your bet of " + payout + "! (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(name + " is in a stand-off!");
+                gui.addToHistory(name + " keeps their bet of " + payout);
+                gui.updatePlayerBalance(player.id, player.getBalance());
             } else {
-                Utilities.failureMessage(name + " lost to DEALER and has won nothing. (Balance: " + player.getBalance() + ")");
+                gui.addToHistory(name + " lost to " + dealer.getName());
+                gui.addToHistory(name + " has won nothing");
             }
 
         }
@@ -380,8 +387,13 @@ public class BlackJack {
     private static void resetHands() {
         for (Player player : players) {
             player.newHand();
+            player.setCanHit(true);
+            gui.updateHand(player.id, player.getHand());
+            gui.updateTotal(player.id, player.getHand().calculateTotal());
         }
         dealer.newHand();
+        gui.updateHand(dealer.id, dealer.getHand());
+        gui.updateTotal(dealer.id, dealer.getHand().calculateTotal());
     }
 
     private static void shuffleDiscards() {
@@ -402,32 +414,22 @@ public class BlackJack {
     }
 
     private static boolean playAgain() {
-        String userInput = Utilities.getUserInput("Play again? (Y/N)");
+        int playAgain = gui.promptForYesNo("Would you like to play again?");
 
-        return switch (userInput.toUpperCase()) {
-            case "Y" -> {
-                newPlayers();
-                yield true;
-            }
-            case "N" -> false;
-            default -> {
-                Utilities.errorMessage("Please enter Y or N");
-                yield playAgain();
-            }
-        };
+        if (playAgain == JOptionPane.YES_OPTION) {
+            newPlayers();
+            return true;
+        }
+        return false;
     }
 
     private static void newPlayers() {
-        String userInput = Utilities.getUserInput("Play with the same players? (Y/N)");
-        switch (userInput.toUpperCase()) {
-            case "Y":
-                return;
-            case "N":
-                setUpPlayers();
-                return;
-            default:
-                Utilities.errorMessage("Please enter Y or N");
-                newPlayers();
+        int samePlayers = gui.promptForYesNo("Play with the same players?");
+
+        if (samePlayers == JOptionPane.YES_OPTION) {
+            return;
         }
+
+        setUpPlayers();
     }
 }

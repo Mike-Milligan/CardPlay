@@ -1,46 +1,59 @@
 package org.mikemilligan.BlackJack.GUI;
 
-import org.mikemilligan.BlackJack.GUI.Buttons.DoubleDownButton;
-import org.mikemilligan.BlackJack.GUI.Buttons.HitButton;
-import org.mikemilligan.BlackJack.GUI.Buttons.SplitButton;
-import org.mikemilligan.BlackJack.GUI.Buttons.StandButton;
+import org.mikemilligan.BlackJack.Hand;
 import org.mikemilligan.Card;
-import org.mikemilligan.Deck;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class BlackJackGUI extends JFrame {
+    private static final Insets INSETS = new Insets(5, 3, 2, 5);
     Container contentPane;
     JLabel minBet;
     JLabel maxBet;
     JLabel currentBet;
     JLabel stage;
     JTextArea history;
+    JPanel dealer;
+    JPanel playersPanel;
+    List<JPanel> playerPanels;
+
+//    HitButton hitButton;
+//    StandButton standButton;
+//    SplitButton splitButton;
+//    DoubleDownButton doubleDownButton;
 
     public BlackJackGUI() {
-        this.setTitle("BlackJack");
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(600, 500);
-        this.setMinimumSize(new Dimension(400,400));
-        this.setLocationRelativeTo(null); // Start in centre
+        playerPanels = new ArrayList<>();
+        setupFrame();
 
         contentPane = setupContentPane(); // All the stuff goes in here
 
         this.setVisible(true);
     }
 
+    private void setupFrame() {
+        this.setTitle("BlackJack");
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setSize(600, 600);
+        this.setMinimumSize(new Dimension(400, 500));
+        this.setLocationRelativeTo(null); // Start in centre
+    }
+
     private Container setupContentPane() {
         Container pane = getContentPane();
+        pane.setLayout(new BorderLayout());
 
         // Add content to pane
-        pane.add(setupPageStart(), BorderLayout.PAGE_START);
+//        pane.add(setupPageStart(), BorderLayout.PAGE_START);
         pane.add(setupCentre(), BorderLayout.CENTER);
         pane.add(setupInfoPane(), BorderLayout.LINE_END);
-        pane.add(setupButtonPanel(), BorderLayout.PAGE_END);
+//        pane.add(setupButtonPanel(), BorderLayout.PAGE_END);
 
         return pane;
     }
@@ -50,7 +63,7 @@ public class BlackJackGUI extends JFrame {
         // Visuals
         pageStart.setBorder(new LineBorder(Color.black));
         // Components
-        pageStart.add(new JLabel("page start"));
+//        pageStart.add(new JLabel("page start"));
         return pageStart;
     }
 
@@ -58,44 +71,64 @@ public class BlackJackGUI extends JFrame {
         JPanel centre = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = createCommonConstraints(centre);
         constraints.fill = GridBagConstraints.BOTH;
-        constraints.weighty = 1;
-//        constraints.anchor = GridBagConstraints.CENTER;
+        constraints.weighty = 1; // Allow vertical expansion
         // Visuals
         centre.setBorder(new LineBorder(Color.black));
         // Components
-        JPanel dealer = setupHandPanel();
+        dealer = setupPlayPanel(true);
         dealer.setBorder(new LineBorder(Color.red));
 
-        JPanel player = setupHandPanel();
-        player.setBorder(new LineBorder(Color.blue));
+        playersPanel = setupPlayPanel(false);
+        playersPanel.setBorder(new LineBorder(Color.blue));
 
         constraints.gridy = 0;
         centre.add(dealer, constraints);
         constraints.gridy = 1;
-        centre.add(player, constraints);
+        centre.add(playersPanel, constraints);
         return centre;
     }
 
-    private JPanel setupHandPanel() {
+    private JPanel setupPlayPanel(boolean dealerHand) {
+        JPanel playPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints constraints = createCommonConstraints(playPanel);
+
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.BOTH;
+
+        if (dealerHand) {
+            return createHandPanel(false);
+        }
+
+        return playPanel;
+    }
+
+    private JPanel createHandPanel(boolean isPlayerHand) {
         JPanel handPanel = new JPanel(new GridBagLayout());
+
 
         GridBagConstraints constraints = createCommonConstraints(handPanel);
         constraints.anchor = GridBagConstraints.NORTH;
-        JLabel handTotal = addTitledInfoLabel(handPanel, "Total", "XX");
+
+        JLabel handTotal = addTitledInfoLabel(handPanel, "Total", "0");
         handTotal.setHorizontalAlignment(SwingConstants.CENTER);
 
         JPanel cardPanel = new JPanel();
-        Deck deck = new Deck(true);
-        for (int i = 0; i < 2; i++) {
-            Card card = deck.draw();
-            ImageIcon cardImage = card.getIcon();
-            JLabel cardLabel = new JLabel(cardImage);
-            cardPanel.add(cardLabel);
-        }
-        constraints.gridy = 1;
+        cardPanel.setOpaque(false);
+        cardPanel.setLayout(null);
+
+        constraints.gridy = handPanel.getComponentCount();
         constraints.fill = GridBagConstraints.BOTH;
         constraints.anchor = GridBagConstraints.CENTER;
         handPanel.add(cardPanel, constraints);
+
+        if (isPlayerHand) {
+            JLabel currentBet = addTitledInfoLabel(handPanel, "Current Bet", "0");
+            currentBet.setHorizontalAlignment(SwingConstants.CENTER);
+            JLabel balance = addTitledInfoLabel(handPanel, "Balance", "500");
+            balance.setHorizontalAlignment(SwingConstants.CENTER);
+        }
+
+        handPanel.setBorder(new LineBorder(Color.green));
 
         return handPanel;
     }
@@ -145,20 +178,25 @@ public class BlackJackGUI extends JFrame {
         return textArea;
     }
 
-    private JPanel setupButtonPanel() {
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        // Visuals
-        buttonPanel.setBorder(new LineBorder(Color.black));
-        // Components
-        buttonPanel.add(new SplitButton());
-        buttonPanel.add(new HitButton());
-        buttonPanel.add(new StandButton());
-        buttonPanel.add(new DoubleDownButton());
+//    private JPanel setupButtonPanel() {
+//        JPanel buttonPanel = new JPanel(new FlowLayout());
+//        // Visuals
+//        buttonPanel.setBorder(new LineBorder(Color.black));
+//        // Components
+//        splitButton = new SplitButton();
+//        hitButton = new HitButton();
+//        standButton = new StandButton();
+//        doubleDownButton = new DoubleDownButton();
+//
+//        buttonPanel.add(splitButton);
+//        buttonPanel.add(hitButton);
+//        buttonPanel.add(standButton);
+//        buttonPanel.add(doubleDownButton);
+//
+//        return buttonPanel;
+//    }
 
-        return buttonPanel;
-    }
-
-//    Helper Methods
+    //    Helper Methods
     private void setFixedWidth(Component component, int width, int minHeight, int prefHeight) {
         component.setMinimumSize(new Dimension(width, minHeight));
         component.setPreferredSize(new Dimension(width, prefHeight));
@@ -169,7 +207,7 @@ public class BlackJackGUI extends JFrame {
 
         constraints.fill = GridBagConstraints.HORIZONTAL; // Fill horizontal space
         constraints.weightx = 1; // Allow horizontal expansion
-        constraints.insets = new Insets(5, 3, 2, 5);
+        constraints.insets = INSETS;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.gridy = panel.getComponentCount();
 
@@ -178,6 +216,178 @@ public class BlackJackGUI extends JFrame {
 
     public static void main(String[] args) {
         // Run the GUI on the Event Dispatch Thread (EDT)
-        BlackJackGUI gui = new BlackJackGUI();
+        SwingUtilities.invokeLater(() -> {
+            BlackJackGUI gui = new BlackJackGUI();
+        });
     }
+
+
+    // Update display values
+    public void refresh() {
+        revalidate();
+        repaint();
+    }
+
+    public void setMinBet(int value) {
+        minBet.setText(String.valueOf(value));
+        refresh();
+    }
+
+    public void setMaxBet(int value) {
+        maxBet.setText(String.valueOf(value));
+        refresh();
+    }
+
+    public void setCurrentBet(int value) {
+        currentBet.setText(String.valueOf(value));
+        refresh();
+    }
+
+    public void setStage(String value) {
+        stage.setText(value);
+        addToHistory(value);
+        refresh();
+    }
+
+    public void addToHistory(String text) {
+        history.append(text + "\n");
+        history.setCaretPosition(history.getDocument().getLength());
+        refresh();
+    }
+
+    // Get Input / Display message
+    public int promptForIntValue(String message) {
+        String input = JOptionPane.showInputDialog(null, message);
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            showErrorMessage("Value must be an integer");
+            return promptForIntValue(message);
+        }
+    }
+
+    public String promptForStringValue(String message) {
+        return JOptionPane.showInputDialog(null, message);
+    }
+
+    public Button promptForOption() {
+        String[] options = {"HIT", "STAND"};
+
+        var selection = JOptionPane.showOptionDialog(
+                null,
+                "Select one:",
+                "Action",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        return switch (selection) {
+            case 0 -> Button.HIT;
+            case 1 -> Button.STAND;
+            default -> null;
+        };
+    }
+
+    public int promptForYesNo(String message) {
+
+        return JOptionPane.showOptionDialog(
+                null,
+                message,
+                "Choose",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                null,
+                null
+                );
+    }
+
+    public void showErrorMessage(String message) {
+        JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public void showInfoMessage(String message) {
+        JOptionPane.showConfirmDialog(null, message, "Info", JOptionPane.DEFAULT_OPTION);
+    }
+
+    // Player setup
+    public void addPlayerHand(String name) {
+        GridBagConstraints constraints = createCommonConstraints(playersPanel);
+
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.BOTH;
+
+        constraints.gridx = playersPanel.getComponentCount();
+        JPanel handPanel = createHandPanel(true);
+        handPanel.setBorder(new TitledBorder(name));
+        handPanel.setName(name);
+        playerPanels.add(handPanel);
+        playersPanel.add(handPanel, constraints);
+        refresh();
+    }
+
+    public void updatePlayerBet(int playerId, int bet) {
+        JPanel playerPanel = playerPanels.get(playerId);
+        JLabel betLabel = (JLabel) playerPanel.getComponent(2);
+        betLabel.setText(String.valueOf(bet));
+        refresh();
+    }
+
+    public void updatePlayerBalance(int playerId, int balance) {
+        JPanel playerPanel = playerPanels.get(playerId);
+        JLabel balanceLabel = (JLabel) playerPanel.getComponent(3);
+        balanceLabel.setText(String.valueOf(balance));
+        refresh();
+    }
+
+    public void updateHand(int playerId, Hand hand) {
+        final int DEALER_ID = -1;
+        JPanel cardPanel;
+        if (playerId == DEALER_ID) {
+            cardPanel = (JPanel) dealer.getComponent(1);
+        } else {
+            JPanel playerPanel = playerPanels.get(playerId);
+            cardPanel = (JPanel) playerPanel.getComponent(1);
+        }
+
+        cardPanel.removeAll();
+
+        int x = 0;
+        int dx = 20;
+
+        for (Card card : hand.getCards()) {
+            ImageIcon cardImage = card.getIcon();
+            JLabel cardLabel = new JLabel(cardImage);
+
+            cardLabel.setBounds(x, 0, cardImage.getIconWidth(), cardImage.getIconHeight());
+            x += dx;
+
+            cardPanel.add(cardLabel);
+
+            cardPanel.setComponentZOrder(cardLabel, 0);
+        }
+
+        Dimension newDims = new Dimension(80 + x, 120);
+        cardPanel.setPreferredSize(newDims);
+
+        refresh();
+    }
+
+    public void updateTotal(int playerId, Object total) {
+        JLabel totalLabel;
+        if (playerId == -1) {
+            totalLabel = (JLabel) dealer.getComponent(0);
+        } else {
+            JPanel playerPanel = playerPanels.get(playerId);
+            totalLabel = (JLabel) playerPanel.getComponent(0);
+        }
+
+        totalLabel.setText(String.valueOf(total));
+        refresh();
+    }
+
+    // Button methods
+    public enum Button { HIT, STAND, SPLIT, DOUBLE_DOWN }
 }
